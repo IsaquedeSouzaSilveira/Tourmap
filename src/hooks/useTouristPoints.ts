@@ -1,0 +1,1 @@
+//Esperando a função da APILocal ficar pronta.
