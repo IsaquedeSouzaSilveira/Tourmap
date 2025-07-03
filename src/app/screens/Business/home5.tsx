@@ -1,12 +1,11 @@
 import { FlatList, View, TouchableOpacity, StyleSheet, Image, Text, TextInput, ActivityIndicator, Animated, Dimensions } from "react-native";
 import React, { useState, useEffect } from 'react';
 import { router } from "expo-router";
-import { usePaises } from '../../../hooks/usePaises';
-import { getUserId, getUserType  } from "@/utils/storage";
+import { usePontosComerciais } from "@/hooks/useComercialPoints";
 import * as Location from 'expo-location';
 
 export default function Home1() {
-    const { pais, carregando } = usePaises();
+    const { pontos, carregando } = usePontosComerciais();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const slideAnim = useState(new Animated.Value(-Dimensions.get('window').width))[0];
     const [searchText, setSearchText] = useState('');
@@ -56,9 +55,10 @@ export default function Home1() {
     };
 
     
-    const filteredPaises = pais.filter(item => 
-        item.name.common.toLowerCase().startsWith(searchText.toLowerCase())
+    const filteredPontos = pontos.filter((item) =>
+        item.name.toLowerCase().includes(searchText.toLowerCase())
     );
+
 
     return (
         <View style={styles.view1}>
@@ -133,35 +133,34 @@ export default function Home1() {
                 <ActivityIndicator size="large" color="#39B51B" style={{ marginTop: 20 }} />
             ) : (
                 <FlatList
-                    data={filteredPaises}
-                    keyExtractor={(item) => item.name.common}
+                    data={filteredPontos}
+                    keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity
-                            onPress={() => router.push({
-                                pathname: '/screens/LocalDetalhes',
+                            onPress={() =>
+                                router.push({
+                                pathname: '/screens/PointsDetalhes',
                                 params: {
-                                    nome: item.name.common,
-                                    bandeira: item.flags.png,
-                                    regiao: item.region,
-                                    capital: item.capital ? item.capital[0] : 'Não informado',
-                                    continente: item.continents ? item.continents[0] : 'Não informado',
-                                    populacao: item.population ? item.population.toString() : 'Não informado',
-                                    area: item.area ? item.area.toString() : 'Não informado',
-                                    linguas: item.languages ? JSON.stringify(item.languages) : 'Não informado',
-                                    moeda: item.currencies ? JSON.stringify(item.currencies) : 'Não informado'
+                                    id: item.id,
+                                    nome: item.name,
+                                    descricao: item.description,
+                                    imagem: item.userImageUrl || '',
+                                    local: item.local
                                 },
-                            })}
+                                })
+                            }
                             style={styles.countryItem}
                         >
-                            <Image source={{ uri: item.flags.png }} style={styles.flag} />
+                            <Image source={{ uri: item.userImageUrl }} style={styles.flag} />
                             <View style={styles.countryTextContainer}>
-                                <Text style={styles.countryName}>{item.name.common}</Text>
-                                <Text style={styles.countrySub}>{item.region}</Text>
+                                <Text style={styles.countryName}>{item.name}</Text>
+                                <Text style={styles.countrySub}>{item.local}</Text>
                             </View>
                         </TouchableOpacity>
                     )}
                     contentContainerStyle={{ padding: 10 }}
                 />
+
             )}
             {isMenuOpen && (
                 <TouchableOpacity style={styles.menuOverlay} onPress={toggleMenu}>

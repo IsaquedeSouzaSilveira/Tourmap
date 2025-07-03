@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +20,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.isaquesouza.TourMap"
+      "package": "com.isaquesouza.TourMap",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +49,10 @@
       "eas": {
         "projectId": "1464900b-6b7a-41fe-9e9f-fe4a2a9a0c8a"
       }
-    }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1464900b-6b7a-41fe-9e9f-fe4a2a9a0c8a"
+    },
+    "owner": "isaquesouza"
   }
 }

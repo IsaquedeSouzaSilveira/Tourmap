@@ -1,97 +1,113 @@
-import React from "react";
-import {View,
-        Text,
-        TouchableOpacity, 
-        Image, 
-        StyleSheet,
-        FlatList   
-        } from "react-native";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
+} from "react-native";
 import { router } from "expo-router";
+import axios from "axios";
 
-import {ButtonBack} from "@/components/button2/index"
+import { ButtonBack } from "@/components/button2/index";
+import { BASE_IP } from "@/config/api"; // ajuste se necessário
 
-export default function PointComercialSolicitys(){
+export default function PointComercialSolicitys() {
+  interface SolicitationItem {
+    id: string;
+    title: string;
+    description: string;
+    time: string;
+  }
 
-    interface SolicitationItem {
-        id: string;
-        title: string;
-        description: string;
-        time: string;
+  const [solicitations, setSolicitations] = useState<SolicitationItem[]>([]);
+
+  useEffect(() => {
+    async function fetchNotPublished() {
+      try {
+        const response = await axios.get(
+          `http://${BASE_IP}:3333/get/notPublished/commercialPoint`
+        );
+
+        const data = response.data.response;
+
+        const formattedData = data.map((item: any) => ({
+          id: item.id,
+          title: item.name,
+          description: item.description,
+          time: new Date(item.creationDate).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+
+        setSolicitations(formattedData);
+      } catch (error) {
+        console.error("Erro ao buscar pontos comerciais não publicados:", error);
+      }
     }
 
-    const [solicitations, setSolicitations] = useState<SolicitationItem[]>([
-        {
-            id: '1',
-            title: 'Cristo Redentor',
-            description: 'Confira as atrações mais visitadas do mês!',
-            time: '10:45',
-        },
-        {
-            id: '2',
-            title: 'Cristo Redentor',
-            description: 'Confira as atrações mais visitadas do mês!',
-            time: '10:45',
-        }
-    ]);
+    fetchNotPublished();
+  }, []);
 
-    const renderItem = ({ item }: { item: SolicitationItem }) => (
+  const renderItem = ({ item }: { item: SolicitationItem }) => (
     <TouchableOpacity
-        style={styles.SolicityButton}
-        activeOpacity={0.7}
-        onPress={() =>
+      style={styles.SolicityButton}
+      activeOpacity={0.7}
+      onPress={() =>
         router.push({
-            pathname: "/screens/Admin/PointSolicityDetails",
-            params: {
-                id: item.id,
-                title: item.title,
-                description: item.description,
-                time: item.time,
-                origin:'PointComercialSolicitys',
-            },
+          pathname: "/screens/Admin/PointSolicityDetails",
+          params: {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            time: item.time,
+            origin: "PointComercialSolicitys",
+          },
         })
-        }
+      }
     >
-        <Image
+      <Image
         source={require("../../../../assets/images/NotificationLocaleIcon.png")}
         style={{ left: 5 }}
-        />
-        <View style={styles.subView}>
+      />
+      <View style={styles.subView}>
         <Text style={styles.SolicityTitle}>{item.title}</Text>
         <Text style={styles.SolicityDescription}>{item.description}</Text>
-        </View>
-        <Text style={styles.SolicityTime}>{item.time}</Text>
+      </View>
+      <Text style={styles.SolicityTime}>{item.time}</Text>
     </TouchableOpacity>
-    );
+  );
 
-    return(
-        <View style={styles.view1}>
-
-                <View style= {styles.view2}>
-                </View>
-                <View style= {styles.view3}>
-                    <View style={styles.titleView}>
-                        <ButtonBack onPress={()=>router.back()} />
-                        <Text style={styles.text1}>Notificações</Text>
-                    </View>
-                    
-                    <FlatList
-                        data={solicitations}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        contentContainerStyle={{ alignItems: 'center', gap: 10, flexGrow: 1 }}
-                        ListEmptyComponent={
-                            <View style={styles.NoneSolicityView}>
-                                <Text style={styles.TextNoneSolicity}>Nenhuma solicitação por aqui ainda</Text>
-                            </View>
-                        }
-                        showsVerticalScrollIndicator={false}
-                    />
-
-                </View>
+  return (
+    <View style={styles.view1}>
+      <View style={styles.view2}></View>
+      <View style={styles.view3}>
+        <View style={styles.titleView}>
+          <ButtonBack onPress={() => router.back()} />
+          <Text style={styles.text1}>Notificações</Text>
         </View>
-    )
+
+        <FlatList
+          data={solicitations}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ alignItems: "center", gap: 10, flexGrow: 1 }}
+          ListEmptyComponent={
+            <View style={styles.NoneSolicityView}>
+              <Text style={styles.TextNoneSolicity}>
+                Nenhuma solicitação por aqui ainda
+              </Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </View>
+  );
 }
+
 
 const styles = StyleSheet.create({
     view1:{

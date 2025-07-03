@@ -13,6 +13,7 @@ import { ButtonPradao } from "@/components/button1";
 import {Input} from "@/components/TextInput1/index";
 import { TextErro } from "@/components/TextErro";
 import { saveUserId, getUserType } from "@/utils/storage";
+import { BASE_IP } from "@/config/api";
 
 export default function Login(){
     const [email, setEmail] = useState('');
@@ -20,12 +21,15 @@ export default function Login(){
     const [erro, setErro] = useState('');
 
     const validacao = async ()=>{
+        
         const endpoints =[
-            "http://192.168.72.107:3333/login/client",
-            "http://192.168.72.107:3333/login/admin",
-            "http://192.168.72.107:3333/login/business"
+            {url: `${BASE_IP}/login/client`},
+            {url: `${BASE_IP}/login/admin`},
+            {url: `${BASE_IP}/login/business`},
         ]
-        for (const url of endpoints){
+
+        for (const {url} of endpoints){
+            console.log("Email:", email, "Senha:", senha);
             try{
                 const resultado =await fetch(url,{
                     method: "POST",
@@ -37,13 +41,17 @@ export default function Login(){
                         password:senha
                     })
                 });
+                
+                
                 if (resultado.ok){
                     const data = await resultado.json();
-                    await saveUserId(data.id || data);
+                    await saveUserId(data.id || '');
                     setErro('');
                     const tipo= await getUserType();
                     if(tipo=== "Cliente"){
+                        console.log('Deu certo')
                         router.replace('/screens/Cliente/home1');
+                        
                     }
                     if(tipo=== "Empresa"){
                         router.replace('/screens/Business/home1')
@@ -52,6 +60,10 @@ export default function Login(){
                         router.replace('/screens/Admin/home1')
                     }
                     return;
+                }
+                else{
+                    const data = await resultado.json();
+                    console.log(data.message)
                 }
             }catch (error){
                 console.error("Erro na requisição:",{url}, error);
@@ -182,7 +194,7 @@ const styles = StyleSheet.create({
     },
     botao:{
         backgroundColor: "transparent"
-
+        
     },
     text3:{
         textDecorationLine: 'underline',

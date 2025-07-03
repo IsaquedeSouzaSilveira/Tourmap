@@ -37,11 +37,13 @@ export default function DenunciesDetails() {
 
   return (
     <View style={styles.container}>
+
       {/* Cabeçalho vermelho */}
       <View style={styles.headerBackground} />
 
       {/* Conteúdo principal */}
       <View style={styles.contentBox}>
+        
         {/* Título com botão de voltar */}
         <View style={styles.header}>
           <ButtonBack onPress={() => router.back()} />

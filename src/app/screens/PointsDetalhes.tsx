@@ -6,10 +6,23 @@ import { router } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { ButtonBack } from '@/components/button2';
 
-export default function LocalDetalhes() {
+export default function PointsDetalhes() {
 
   const [favorita, setFavorita] = useState(false);
   const [Avaliacao, setAvaliacao] = useState(0);
+
+  const params = useLocalSearchParams();
+
+  const getStringParam = (param: string | string[] | undefined): string => {
+    if (Array.isArray(param)) return param[0];
+    return param || '';
+  };
+
+  const nome = getStringParam(params.nome);
+  const descricao = getStringParam(params.descricao);
+  const imagem = getStringParam(params.imagem);
+  const local = getStringParam(params.local);
+  const id = getStringParam(params.id);
 
   const favoritar =()=>{
     setFavorita(!favorita);
@@ -18,37 +31,6 @@ export default function LocalDetalhes() {
   const avaliacao = (index: number) => {
     setAvaliacao(index);
   }
-  const params = useLocalSearchParams();
-
-    const getStringParam = (param: string | string[] | undefined): string => {
-        if (Array.isArray(param)) return param[0];
-        return param || ''; 
-    };
-
-    const nome = getStringParam(params.nome);
-    const bandeira = getStringParam(params.bandeira);
-    const regiao = getStringParam(params.regiao);
-    const capital = getStringParam(params.capital);
-    const continente = getStringParam(params.continente);
-    const populacao = getStringParam(params.populacao);
-    const area = getStringParam(params.area);
-    const linguas = getStringParam(params.linguas);
-    const moeda = getStringParam(params.moeda);
-
-    const linguasObj = linguas ? JSON.parse(linguas) : {};
-    interface MoedaInfo {
-      name: string;
-      symbol: string;
-    }
-
-    const moedaObj: Record<string, MoedaInfo> = moeda ? JSON.parse(moeda) : {};
-    const moedaValores = Object.values(moedaObj)[0];
-
-    const moedaNome = moedaValores?.name || 'Não informado';
-    const moedaSimbolo = moedaValores?.symbol || '';
-
-    const linguasFormatadas = Object.values(linguasObj).join(', ');
-    
 
   return (
     <View style={styles.view1}>
@@ -56,35 +38,34 @@ export default function LocalDetalhes() {
       <View style={styles.header}>
         <ButtonBack onPress={()=> router.back()}/>
         <Text style={styles.text1}>{nome}</Text>
-        <Text style={styles.text2}>{regiao}</Text>
+        <Text style={styles.text2}>{local}</Text>
       </View>
 
       
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: bandeira }} style={styles.imagem} />
+
+        <Image style={styles.imagem} source={{ uri: imagem }}/>
+
         <View style={styles.SobreView}>
           <Text style={styles.sobreTitulo}>Sobre</Text>
-            <Text style={styles.sobreTexto}>
-                Capital: {capital}{"\n"}
-                Continente: {continente}{"\n"}
-                População: {populacao} habitantes{"\n"}
-                Área: {area} km²{"\n"}
-                Línguas oficiais: {linguasFormatadas}{"\n"}
-                Moeda oficial: {moedaNome} {moedaSimbolo}
-            </Text>
+          <Text style={styles.sobreTexto}>{descricao}</Text>
 
           <TouchableOpacity onPress={favoritar} style={styles.Heart}>
+
             <FontAwesome
               name="heart"
               size={25}
               color={favorita ? 'red' : 'gray'}
             />
+
           </TouchableOpacity>
           
         </View>
+
         <View style={styles.Subview}>
 
           <Text style={styles.AvaliacaoText}>Avaliação:</Text>
+
           <View style={styles.AvaliacaoView}>
             {[1, 2, 3, 4, 5].map((index) => (
               <TouchableOpacity key={index} onPress={()=>avaliacao(index)} activeOpacity={1}>
@@ -96,20 +77,29 @@ export default function LocalDetalhes() {
               </TouchableOpacity>
             ))}
           </View>
-            <TouchableOpacity 
-              style={styles.DenunciaButton} 
-              activeOpacity={0.8}
-            >
-              <Image source={require('../../../assets/images/DenunciaIcon.png')} style={styles.DenunciaImage}/>
-            </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.DenunciaButton} 
+            activeOpacity={0.8}
+            onPress={()=>router.push({
+              pathname: '/screens/Cliente/denuncia',
+              params:{
+        
+              }
+              })
+            }
+          >
+            <Image source={require('../../../assets/images/DenunciaIcon.png')} style={styles.DenunciaImage}/>
+          </TouchableOpacity>
+
         </View>
+        
         <View style={styles.ComentsView}>
-              <Text style={styles.ComentText}>Deixe seu comentário:</Text>
-              <TextInput placeholder='Comente:' style={styles.ComentInput}>
 
-              </TextInput>
+          <Text style={styles.ComentText}>Deixe seu comentário:</Text>
+          <TextInput placeholder='Comente:' style={styles.ComentInput}/>
+
         </View>
-
       </ScrollView>
     </View>
   );

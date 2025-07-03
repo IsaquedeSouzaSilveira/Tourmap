@@ -3,9 +3,11 @@ import { View, Text ,TouchableOpacity, Image, StyleSheet, TextInput, KeyboardAvo
 import { useState } from "react";
 import { router } from "expo-router";
 
-import {ButtonBack} from "@/components/button2/index"
+import {ButtonBack} from "@/components/button2/index";
 import { ButtonPradao } from "@/components/button1";
 import { TextErro } from "@/components/TextErro";
+import { saveUserId } from "@/utils/storage";
+import { BASE_IP } from "@/config/api";
 
 export default function CadastroEmpresa(){
     const [nome, setNome] = useState('');
@@ -22,7 +24,7 @@ export default function CadastroEmpresa(){
             return;
         }
         try {
-            const response = await fetch("http://192.168.72.107:3333/register/business", {
+            const response = await fetch(`${BASE_IP}/register/business`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -37,8 +39,8 @@ export default function CadastroEmpresa(){
             });
                 
             if (response.ok) {
-                const id = await response.json();
-                console.log("Empresa registrado com ID:", id);
+                const data = await response.json();
+                await saveUserId(data.id || data);
                 setErro('');
                 router.replace('/screens/Business/home1');
             } else {

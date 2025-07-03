@@ -1,9 +1,13 @@
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 
+import { BASE_IP } from '@/config/api';
+
+
 export async function saveUserId(id: string) {
   try {
     await SecureStore.setItemAsync('userId', id);
+    console.log('Id salvo')
   } catch (e) {
     console.error("Erro ao salvar o id:", e);
   }
@@ -29,36 +33,36 @@ export async function getUserId() {
 }
 
 export const getUserType = async (): Promise<"Cliente" | "Empresa" | "Admin" | null> => {
-
-  try{
+  try {
     const id = await SecureStore.getItemAsync('userId');
-    if(!id){
+    if (!id) {
       console.log('Id do usuário não armazenado.');
       return null;
     }
 
     const urls = [
-      { url: `http://192.168.72.107:3333/get/client/${id}`, tipo: "Cliente" as const},
-      { url: `http://192.168.72.107:3333/get/business/${id}`, tipo: "Empresa" as const},
-      { url: `http://192.168.72.107:3333/get/admin/${id}`, tipo: "Admin" as const},
+      { url: `${BASE_IP}/get/client/id`, tipo: "Cliente" as const, method: 'POST' },
+      { url: `${BASE_IP}/get/business/id`, tipo: "Empresa" as const, method: 'POST' },
+      { url: `${BASE_IP}/get/admin/${id}`, tipo: "Admin" as const, method: 'GET' },
     ];
 
-    for(const {url,tipo} of urls){
-      try{
-        const resultado = await axios.get(url);
+    for (const { url, tipo, method } of urls) {
+      try {
+        const resultado = method === 'GET'
+          ? await axios.get(url)
+          : await axios.post(url, { id });
+
         if (resultado.status === 200 && resultado.data) {
           return tipo;
-        } 
-        else {
+        } else {
           console.log('Erro ao buscar tipo:', resultado.data?.message);
         }
-      }
-      catch(error){
+      } catch (error) {
+        console.log('Erro na requisição do servidor: ', error);
       }
     }
-  }
-  catch(error){
-    console.log('Erro no getUserType: ',error);
+  } catch (error) {
+    console.log('Erro no getUserType: ', error);
   }
   return null;
 };

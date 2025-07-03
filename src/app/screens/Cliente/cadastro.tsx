@@ -7,6 +7,8 @@ import {ButtonBack} from "@/components/button2/index"
 import { ButtonPradao } from "@/components/button1";
 import {Input} from "@/components/TextInput1/index";
 import { TextErro } from "@/components/TextErro";
+import { saveUserId } from "@/utils/storage";
+import { BASE_IP } from "@/config/api";
 
 export default function Cadastro(){
     const [nome, setNome] = useState('');
@@ -33,7 +35,7 @@ export default function Cadastro(){
 
         
         try {
-            const resultado = await fetch("http://192.168.0.103:3333/register/client", {
+            const resultado = await fetch(`${BASE_IP}/register/client`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -46,8 +48,10 @@ export default function Cadastro(){
             });
 
             if (resultado.ok) {
-                setErro('');
+                const data = await resultado.json();
+                await saveUserId(data.id || '');
                 router.replace('/screens/Cliente/home1');
+                setErro('');
             } else {
                 const data = await resultado.json();
                 setErro(data.message || 'Erro ao registrar');
@@ -57,6 +61,7 @@ export default function Cadastro(){
             setErro('Erro de conexão com o servidor.');
         }
     }
+
     return(
         <KeyboardAvoidingView style= {{flex:1}} behavior="height">
             <ScrollView contentContainerStyle={{flexGrow: 1}}>

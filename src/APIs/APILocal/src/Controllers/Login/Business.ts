@@ -38,91 +38,81 @@ export default async function RoutesBusiness() {
                 }
             });
     
-            return reply.status(201).send({id: response.id});
+            return reply.status(201).send({response: response.id, message: "criado com sucesso"});
             
         } catch (error) {
             console.error("Erro ao criar usuário:", error);
-            return reply.status(500).send({ message: "Erro interno do servidor" });
+            return reply.status(500).send({message: "Erro desconhecido ou interno no servidor...", error});       
         };
     });
     
-    //Login CLIENT
+    //Login BUSINESS
     server.post("/login/business", async (request, reply) => {
-        const body = request.body as {email: string; password: string;};
-        const {email, password, } = body;
+        const body = request.body as {email: string; password: string};
+        const {email, password} = body;
     
         try {
-            if ( !email || !password ) {
-                return reply.status(404).send({message: "Email ou Nome ou Senha não preenchidos"})
+            if (!email || !password) {
+                return reply.status(404).send({message: "Email ou Senha não preenchidos"})
             }  
     
-            const existingUser = await prismaClient.user_Business.findUnique({where: {email}})
+            const response = await prismaClient.user_Business.findUnique({where: {email}})
     
-             if (existingUser ) {
-                if (existingUser.email === email  && existingUser.password === password ){
-                    return reply.status(200).send({id:existingUser.id});
-                }   
-                else {
-                    return reply.status(404).send({message: "Algum campo preenchido incorretamente"});
-                }
-            } else {
+            if (!response) {
                 return reply.status(404).send({message: "Usuario não cadastrado"});
-            }
+            };
+            if (response.email !== email && response.password !== password){
+                return reply.status(404).send({message: "Algum campo preenchido incorretamente"});
+            };
+
+            return reply.status(200).send({response: response.id, message: "id retornado com sucesso"});
+
         } catch (error) {
-            return reply.status(500).send({error});            
+            return reply.status(500).send({message: "Erro desconhecido ou interno no servidor...", error});                   
         }
     
     });
     
-    //Get Business
-    server.get("/get/business/:id", async (request, reply) => {
-            const body = request.params as {id: string};
-            const {id} = body
-            try {
-            const existingUser = await prismaClient.user_Business.findUnique({where: {id}});
+    //Get BUSINESS
+    server.post("/get/business/id", async (request, reply) => {
+        const body = request.body as {id: string};
+        const {id} = body
+        try {
             if (!id) {
                 return reply.status(404).send({message: "ID não preenchido"});
-            }
-            if (existingUser) {
-                return reply.status(200).send(existingUser);
-            } else {
+            };
+
+            const response = await prismaClient.user_Business.findUnique({where: {id}});
+
+            if (!response) {
                 return reply.status(404).send({message: "Usuario não encontrado"});
             };
+
+            return reply.status(200).send({response, message: "usuario business retornado"});
             
         } catch (error) {
-            return reply.status(500).send(error);
+            return reply.status(500).send({message: "Erro desconhecido ou interno no servidor...", error});       
         }
     });
     
-    //Get CLIENT LIST
+    //Get BUSINESS LIST
     server.get("/get/business/list", async (request, reply) => {
         try {
-            const clientList = await prismaClient.user_Business.findMany();
-            if (clientList) {
-                return reply.status(200).send(clientList);
-            } else {
+            const response = await prismaClient.user_Business.findMany();
+            if (!response) {
                 return reply.status(404).send({message: "Empresa List não encontrado"})
             }
+
+            return reply.status(200).send({response, message: "lista de business"});
             
         } catch (error) {
-            return reply.status(500).send(error);
-        }
-    });
-    
-    server.delete("/delete/business/list", async (request, reply) => {
-        try {
-            await prismaClient.user_Business.deleteMany({});
-            console.log("Todos os itens da tabela user_Business foram deletados."); // Apenas log no terminal
-            return reply.status(200).send({ message: "Todos os registros foram excluídos com sucesso!" }); // Resposta correta
-        } catch (error) {
-            console.error("Erro ao excluir registros:", error);
-            return reply.status(500).send({ message: "Erro interno no servidor", error });
+            return reply.status(500).send({message: "Erro desconhecido ou interno no servidor...", error});        
         }
     });
 
     server.post("/update/business", async (request, reply) => {
-        const body = request.body as {id: string, newName?: string, oldPassword: string, newPassword?: string, newTelefone?: string};
-        const {id, newName, oldPassword, newPassword, newTelefone} = body;
+        const body = request.body as {id: string, newName?: string, oldPassword: string, newPassword?: string, newTelefone?: string, userImageUrl?: string};
+        const {id, newName, oldPassword, newPassword, newTelefone, userImageUrl} = body;
 
         try {
             if (!id || !oldPassword) {
@@ -133,25 +123,38 @@ export default async function RoutesBusiness() {
 
             if(!idExisting) {
                 return reply.status(500).send({message: "não existe esse usuario dentro do banco de dados"});
-            }
+            };
 
-            if(idExisting?.password != oldPassword) {
+            if(idExisting.password != oldPassword) {
                 return reply.status(500).send({message: "as senhas não se coincidem"});
-            }
+            };
 
             const response = await prismaClient.user_Business.update({
                 where: {id},
                 data: {
                     name: newName ?? idExisting.name,
                     password: newPassword ?? oldPassword,
-                    telefone: newTelefone ?? idExisting.telefone
+                    telefone: newTelefone ?? idExisting.telefone,
+                    userImageUrl
                 }
             });
 
             return reply.status(200).send({response, message:"atualizado com sucesso"})
     
         } catch (error) {
-            return reply.status(500).send({message: "Erro desconhecido ou interno no servidor...", error})    
+            return reply.status(500).send({message: "Erro desconhecido ou interno no servidor...", error});    
         }
     })
+
+        // não deve ser usado
+    server.delete("/delete/business/list", async (request, reply) => {
+        try {
+            await prismaClient.user_Business.deleteMany({});
+            console.log("Todos os itens da tabela user_Business foram deletados."); // Apenas log no terminal
+            return reply.status(200).send({ message: "Todos os registros foram excluídos com sucesso!" }); // Resposta correta
+        } catch (error) {
+            console.error("Erro ao excluir registros:", error);
+            return reply.status(500).send({ message: "Erro interno no servidor", error });
+        }
+    });
 }

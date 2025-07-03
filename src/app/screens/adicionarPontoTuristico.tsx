@@ -1,25 +1,23 @@
 import React, { useState } from "react";
-import { View, Text ,TouchableOpacity, Image, StyleSheet, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, Image, StyleSheet, TextInput, ScrollView } from "react-native";
 import { router } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 
 import { getUserId } from "@/utils/storage";
-
 import { ButtonBack } from "@/components/button2/index";
 import { ButtonPradao } from "@/components/button1";
-import { TextErro } from "@/components/TextErro";
+import { BASE_IP } from "@/config/api";
 
-export default function AdicionarPontoTuristico(){
-    
+export default function adicionarPontoTuristico() {
     const [nome, SetNome] = useState('');
-    const [descricao, SetDescricao]= useState('');
-    const [estado, SetEstado]= useState('');
-    const [cidade, SetCidade]= useState('');
-    const [bairro, SetBairro]= useState('');
-    const [rua, SetRua]= useState('');
-    const [erro, SetErro]= useState('');
+    const [descricao, SetDescricao] = useState('');
+    const [estado, SetEstado] = useState('');
+    const [cidade, SetCidade] = useState('');
+    const [bairro, SetBairro] = useState('');
+    const [rua, SetRua] = useState('');
+    const [erro, SetErro] = useState('');
 
-    const [imagemUri, setImagemUri] = useState<string | null>(null);
+    const [imagensUris, setImagensUris] = useState<string[]>([]);
 
     const escolherImagem = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -29,23 +27,25 @@ export default function AdicionarPontoTuristico(){
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             quality: 1,
         });
 
-        if (!result.canceled) {
-            setImagemUri(result.assets[0].uri);
+        if (!result.canceled && result.assets.length > 0) {
+            const novaImagem = result.assets[0].uri;
+            setImagensUris((prev) => [...prev, novaImagem]);
         }
     };
 
     const solicitar = async () => {
+        
         const localizacao = `Estado: ${estado}, cidade: ${cidade}, bairro: ${bairro}, rua: ${rua}`;
         const data = new Date();
         const userId = await getUserId();
 
         try {
-            const resultado = await fetch("http://192.168.72.107:3333/register/touristPoint", {
+            const resultado = await fetch(`${BASE_IP}/register/touristPoint`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -58,22 +58,45 @@ export default function AdicionarPontoTuristico(){
                     local: localizacao
                 })
             });
+            
+            const responseJson = await resultado.json();
 
-            if (resultado.ok) {
-                SetErro('');
-                console.log('Solicitação feita com sucesso.');
-                router.back();
-            } else {
-                const data = await resultado.json();
-                console.log(data.message);
-                SetErro(data.message || 'Erro ao registrar');
+            if (!resultado.ok) {
+                console.log( responseJson.message || 'Erro ao registrar')
+                SetErro(responseJson.message || 'Erro ao registrar');
                 return;
             }
+
+            const idTouristPoint = responseJson.response?.id;
+            if (!idTouristPoint) {
+                SetErro('ID do ponto comercial não retornado.');
+                return;
+            }
+
+            for (const imagem of imagensUris) {
+                await fetch("http://192.168.72.107:3333/create/image/TouristPoint", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        idUser: userId,
+                        idTouristPoint: idTouristPoint,
+                        ImageUrl: imagem
+                    })
+                });
+            }
+
+            SetErro('');
+            console.log('Ponto turístico e imagens enviados com sucesso');
+            router.back();
+
         } catch (error) {
-            console.log('Erro ao solicitar o registro do ponto turístico: ', error);
-            return;
+            console.log('Erro ao solicitar o registro do ponto turistico: ', error);
+            SetErro('Erro interno ao enviar os dados');
         }
     };
+
 
     return (
         <View style={styles.view1}>
@@ -82,19 +105,36 @@ export default function AdicionarPontoTuristico(){
                 <Text style={styles.text1}>Adicionar Ponto Turístico</Text>
             </View>
 
-            <View style={styles.view3}>
+            <ScrollView contentContainerStyle={styles.view3}>
                 <View style={styles.subView}>
-                    <TouchableOpacity onPress={escolherImagem}>
-                        <Image
-                            source={
-                                imagemUri
-                                    ? { uri: imagemUri }
-                                    : require('../../../assets/images/PerfilIcon2.png')
-                            }
-                            style={{ width: 80, height: 80, borderRadius: 10 }}
-                        />
-                    </TouchableOpacity>
-                    <Text style={styles.text1}>Fotos do P.Turístico</Text>
+                    
+
+                    {imagensUris.length === 0 ?(
+                        <TouchableOpacity onPress={escolherImagem}>
+                            <Image
+                                source={require('../../../assets/images/PerfilIcon2.png')}
+                                style={styles.imagem}
+                            />
+                        </TouchableOpacity>
+                    ):(
+                        <ScrollView horizontal contentContainerStyle={{ gap: 10 }} style={{width: 315}}>
+                                {imagensUris.map((uri, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        onPress={() => {
+                                            setImagensUris(prev => prev.filter((_, i) => i !== index));
+                                        }}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Image source={{ uri }} style={styles.imagem} />
+                                    </TouchableOpacity>
+                                ))}
+                                <TouchableOpacity onPress={escolherImagem} style={{justifyContent: 'center', marginLeft: 10}}>
+                                    <Image source={require('../../../assets/images/Plus.png')}/>
+                                </TouchableOpacity>
+                        </ScrollView>
+                    )}
+
                 </View>
 
                 <TextInput placeholder="Nome" style={styles.input} onChangeText={SetNome} />
@@ -104,8 +144,7 @@ export default function AdicionarPontoTuristico(){
                 <TextInput placeholder="Rua" style={styles.input} onChangeText={SetRua} />
                 <TextInput placeholder="Descrição" style={styles.input} onChangeText={SetDescricao} />
                 <ButtonPradao title="ENVIAR" onPress={solicitar} />
-                {erro !== '' && TextErro(erro)}
-            </View>
+            </ScrollView>
         </View>
     );
 }
@@ -128,19 +167,23 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "column",
-        flex: 1,
         gap: 10,
         paddingTop: 90,
+        paddingBottom: 50,
     },
     subView: {
         width: '100%',
-        position: 'absolute',
         alignItems: 'center',
-        flexDirection: 'row',
-        paddingLeft: 15,
-        gap: 25,
-        top: 1,
-        height: 120
+        flexDirection: 'column',
+        paddingHorizontal: 15,
+        gap: 10,
+        marginBottom: 10,
+        top: -50
+    },
+    imagem: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
     },
     text1: {
         fontSize: 20

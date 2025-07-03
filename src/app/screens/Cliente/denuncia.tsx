@@ -10,9 +10,9 @@ import { router } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 
 import {ButtonBack} from "@/components/button2/index";
-import { ButtonPradao } from "@/components/button1";
 import { getUserId } from "@/utils/storage";
 import { TextErro } from "@/components/TextErro";
+import { BASE_IP } from "@/config/api";
 
 
 export default function Denuncia(){
@@ -38,10 +38,10 @@ export default function Denuncia(){
         let url='';
 
         if(PointType==='Turistico'){
-            url= 'http://192.168.72.107:3333/report/touristPoint';
+            url= `${BASE_IP}/report/touristPoint`;
         }
         else if(PointType==='Comercial'){
-            url= 'http://192.168.72.107:3333/report/comercialPoint';
+            url= `${BASE_IP}/report/comercialPoint`;
         }
         else{
             console.log('O tipo do ponto é inválido');

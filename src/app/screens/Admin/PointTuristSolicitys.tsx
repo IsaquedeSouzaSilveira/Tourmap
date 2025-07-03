@@ -1,106 +1,135 @@
-import React from "react";
-import {View,
-        Text,
-        TouchableOpacity, 
-        Image, 
-        StyleSheet,
-        FlatList   
-        } from "react-native";
-import { useState } from "react";
-import { router, useFocusEffect, useLocalSearchParams  } from "expo-router";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
+} from "react-native";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import axios from "axios";
 
-import {ButtonBack} from "@/components/button2/index"
+import { ButtonBack } from "@/components/button2/index";
+import { BASE_IP } from "@/config/api"; // Certifique-se que esta constante exista
 
-export default function PointTuristSolicitys(){
+export default function PointTuristSolicitys() {
+  interface PontoTuristico {
+    id: string;
+    name: string;
+    description: string;
+    creationDate: string; // ou Date, dependendo do formato retornado
+  }
 
-    interface SolicitationItem {
-        id: string;
-        title: string;
-        description: string;
-        time: string;
+  interface SolicitationItem {
+    id: string;
+    title: string;
+    description: string;
+    time: string;
+  }
+
+  const [solicitations, setSolicitations] = useState<SolicitationItem[]>([]);
+  const params = useLocalSearchParams();
+
+  // Remove item da lista quando voltar da tela de detalhes
+  useFocusEffect(
+    React.useCallback(() => {
+      if (params?.removeId) {
+        setSolicitations((prev) =>
+          prev.filter((s) => s.id !== params.removeId)
+        );
+      }
+    }, [params?.removeId])
+  );
+
+  // Requisição para pegar pontos turísticos não publicados
+  useEffect(() => {
+    async function fetchUnpublishedPoints() {
+      try {
+        const response = await axios.get(
+          `http://${BASE_IP}:3333/get/notPublished/touristPoint`
+        );
+        const data: PontoTuristico[] = response.data.response;
+
+        const formatted: SolicitationItem[] = data.map((item) => ({
+          id: item.id,
+          title: item.name,
+          description: item.description,
+          time: new Date(item.creationDate).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+
+        setSolicitations(formatted);
+      } catch (error) {
+        console.error("Erro ao buscar pontos turísticos não publicados:", error);
+      }
     }
 
-    const params = useLocalSearchParams();
+    fetchUnpublishedPoints();
+  }, []);
 
-    useFocusEffect(
-        React.useCallback(() => {
-            if (params?.removeId) {
-            setSolicitations(prev => prev.filter(s => s.id !== params.removeId));
-            }
-        }, [params?.removeId])
-    );
-
-    const [solicitations, setSolicitations] = useState<SolicitationItem[]>([
-        {
-            id: '1',
-            title: 'Cristo Redentor',
-            description: 'Confira as atrações mais visitadas do mês!',
-            time: '10:45',
-        },
-        {
-            id: '2',
-            title: 'Cristo Redentor',
-            description: 'Confira as atrações mais visitadas do mês!',
-            time: '10:45',
-        }
-    ]);
-
-    const renderItem = ({ item }: { item: SolicitationItem }) => (
+  const renderItem = ({ item }: { item: SolicitationItem }) => (
     <TouchableOpacity
-        style={styles.SolicityButton}
-        activeOpacity={0.7}
-        onPress={() =>
+      style={styles.SolicityButton}
+      activeOpacity={0.7}
+      onPress={() =>
         router.push({
-            pathname: "/screens/Admin/PointSolicityDetails",
-            params: {
-                id: item.id,
-                title: item.title,
-                description: item.description,
-                time: item.time,
-                origin:'PointTuristSolicitys',
-            },
+          pathname: "/screens/Admin/PointSolicityDetails",
+          params: {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            time: item.time,
+            origin: "PointTuristSolicitys",
+          },
         })
-        }
+      }
     >
-        <Image
+      <Image
         source={require("../../../../assets/images/NotificationLocaleIcon.png")}
         style={{ left: 5 }}
-        />
-        <View style={styles.subView}>
-            <Text style={styles.SolicityTitle}>{item.title}</Text>
-            <Text style={styles.SolicityDescription}>{item.description}</Text>
-        </View>
-        <Text style={styles.SolicityTime}>{item.time}</Text>
+      />
+      <View style={styles.subView}>
+        <Text style={styles.SolicityTitle}>{item.title}</Text>
+        <Text style={styles.SolicityDescription}>{item.description}</Text>
+      </View>
+      <Text style={styles.SolicityTime}>{item.time}</Text>
     </TouchableOpacity>
-    );
+  );
 
-    return(
-        <View style={styles.view1}>
+  return (
+    <View style={styles.view1}>
+      <View style={styles.view2}></View>
 
-                <View style= {styles.view2}>
-                </View>
-                <View style= {styles.view3}>
-                    <View style={styles.titleView}>
-                        <ButtonBack onPress={()=>router.back()} />
-                        <Text style={styles.text1}>Solicitações</Text>
-                    </View>
-                    
-                    <FlatList
-                        data={solicitations}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        contentContainerStyle={{ alignItems: 'center', gap: 10, flexGrow: 1 }}
-                        ListEmptyComponent={
-                            <View style={styles.NoneSolicityView}>
-                                <Text style={styles.TextNoneSolicity}>Nenhuma solicitação por aqui ainda</Text>
-                            </View>
-                        }
-                        showsVerticalScrollIndicator={false}
-                    />
-
-                </View>
+      <View style={styles.view3}>
+        <View style={styles.titleView}>
+          <ButtonBack onPress={() => router.back()} />
+          <Text style={styles.text1}>Solicitações</Text>
         </View>
-    )
+
+        <FlatList
+          data={solicitations}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{
+            alignItems: "center",
+            gap: 10,
+            flexGrow: 1,
+          }}
+          ListEmptyComponent={
+            <View style={styles.NoneSolicityView}>
+              <Text style={styles.TextNoneSolicity}>
+                Nenhuma solicitação por aqui ainda
+              </Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

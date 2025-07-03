@@ -18,7 +18,6 @@ export default function Home1() {
     const [mostrarFiltrosLocais, setMostrarFiltrosLocais] = useState(false);
     const [filtrosSelecionados, setfiltrosSelecionados] = useState<string[]>([]);
 
-    const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
     const [localizacaoTexto, setLocalizacaoTexto] = useState('Carregando...');
 
 
@@ -33,7 +32,6 @@ export default function Home1() {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === 'granted') {
                 const loc = await Location.getCurrentPositionAsync({});
-                setLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
 
                 const reverseGeocode = await Location.reverseGeocodeAsync({
                     latitude: loc.coords.latitude,
@@ -273,16 +271,16 @@ export default function Home1() {
                 ) : (
                     <View style={styles.view3}>
                         <Text style={styles.text2}>Destaques</Text>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home2')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home2')}>
                         <Image source={require('../../../../assets/images/Avaliacao.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home3')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home3')}>
                         <Image source={require('../../../../assets/images/Heart.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home4')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home1')}>
                         <Image source={require('../../../../assets/images/Home.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home5')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home5')}>
                         <Image source={require('../../../../assets/images/Comercio.png')} />
                         </TouchableOpacity>
                     </View>
@@ -334,7 +332,7 @@ export default function Home1() {
                             </TouchableOpacity>
                         </View>
                         <View style={styles.ServicosView}>
-                            <TouchableOpacity onPress={()=> router.navigate('/screens/Business/perfil')} >
+                            <TouchableOpacity onPress={()=> router.navigate('/screens/Admin/perfil')} >
                                 <Text style={styles.menuText}>PERFIL</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={()=> router.navigate('/screens/Admin/PointTuristSolicitys')}>
@@ -348,7 +346,7 @@ export default function Home1() {
                             </TouchableOpacity>
                             <TouchableOpacity onPress={LogOut}>
                                 <Text style={styles.menuText}>SAIR DA CONTA</Text>
-                            </TouchableOpacity>
+                           </TouchableOpacity>
                         </View>
                         
                     </Animated.View>

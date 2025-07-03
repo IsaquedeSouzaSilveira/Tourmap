@@ -16,61 +16,54 @@ export default function SolicitationDetails() {
   const [buttonsVisible, setButtonsVisible] = useState(true);
 
   const params = useLocalSearchParams();
+  const id = params.id
   const title = params.title;
   const description = params.description;
-
-    const aceitar = () => {
-        setButtonsVisible(false);
-        setTimeout(() => {
-            if (params.origin === "PointTuristSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointTuristSolicitys",
-                params: { removeId: params.id },
-            });
-            } else if (params.origin === "PointComercialSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointComercialSolicitys",
-                params: { removeId: params.id },
-            });
-            }
-        }, 500); 
-    };
-    const negar = () => {
-        setButtonsVisible(false);
-        setTimeout(() => {
-            if (params.origin === "PointTuristSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointTuristSolicitys",
-                params: { removeId: params.id },
-            });
-            } else if (params.origin === "PointComercialSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointComercialSolicitys",
-                params: { removeId: params.id },
-            });
-            }
-        }, 500);  
-    };
+  
 
   return (
     <View style={styles.view1}>
-      <View style={styles.view2}></View>
+
+      <View style={styles.view2}>
+
+      </View>
+
       <View style={styles.view3}>
+
         <View style={styles.titleView}>
+
           <ButtonBack onPress={() => router.back()} />
           <Text style={styles.NotifyTitle}>{title}</Text>
+
         </View>
 
         <ScrollView style={styles.DescriptionView}>
+
           <Text style={styles.NotifyDescription}>{description}</Text>
           <Text style={styles.NotifyDescription}>{location}</Text>
+
         </ScrollView>
+
         <TouchableOpacity>
-            <Text>Editar</Text>
+          <Text>Editar</Text>
         </TouchableOpacity>
+
         <TouchableOpacity>
             <Text>Apagar</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+        onPress={()=>
+          router.push({
+            pathname: '/screens/Admin/DenunciesDetails', 
+            params:{
+              id: id
+            }
+          })
+        }>
+            <Text>Ver denuncias</Text>
+        </TouchableOpacity>
+
       </View>
     </View>
   );

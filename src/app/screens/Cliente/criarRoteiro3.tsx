@@ -12,21 +12,62 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ButtonBack } from "@/components/button2/index";
 import { usePaises } from "@/hooks/usePaises";
 import { getUserId } from "@/utils/storage";
+import { BASE_IP } from "@/config/api";
+
+// Defina o tipo unificado (exemplo):
+type ItemUnificado =
+  | {
+      tipo: "pais";
+      id: string;
+      nome: string;
+      imagem: string;
+      regiao: string;
+      capital: string;
+      continente: string;
+      populacao: string;
+      area: string;
+      linguas: string;
+      moeda: string;
+    }
+  | {
+      tipo: "turistico" | "comercial";
+      id: string;
+      nome: string;
+      imagem: string;
+      regiao: string;
+    };
 
 export default function Roteiro() {
-  const { paises, id } = useLocalSearchParams();
-  const paisesSelecionados = JSON.parse(paises as string);
-  const [roteiroSalvo, SetSalvarRoteiro] = useState(false);
+  // Recebe os locais selecionados como JSON string
+  const { locaisSelecionados, id } = useLocalSearchParams();
+  let locais: ItemUnificado[] = [];
+
+  try {
+    if (typeof locaisSelecionados === "string") {
+      locais = JSON.parse(locaisSelecionados) as ItemUnificado[];
+    } else {
+      console.warn("locaisSelecionados não é uma string:", locaisSelecionados);
+    }
+  } catch (e) {
+    console.error("Erro ao parsear locaisSelecionados:", e);
+  }
+
+  const [roteiroSalvo, setRoteiroSalvo] = useState(false);
   const [roteiro, setRoteiro] = useState<{ title: string; description: string } | null>(null);
 
-  const { pais: todosPaises } = usePaises();
-  const [paisesExibidos, setPaisesExibidos] = useState<any[]>([]);
+  // Estado local que controla os locais exibidos (pode ser atualizado)
+  const [locaisExibidos, setLocaisExibidos] = useState<ItemUnificado[]>([]);
+
+  useEffect(() => {
+    // Inicializa com os locais selecionados recebidos
+    setLocaisExibidos(locais);
+  }, [locais]);
 
   useEffect(() => {
     const buscarRoteiro = async () => {
       const idCreator = await getUserId();
       try {
-        const response = await fetch("http://192.168.72.107:3333/get/roadMap", {
+        const response = await fetch(`${BASE_IP}/get/roadMap`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, idCreator })
@@ -48,27 +89,55 @@ export default function Roteiro() {
     if (id) buscarRoteiro();
   }, [id]);
 
-  useEffect(() => {
-    const filtrados = todosPaises.filter(p =>
-      paisesSelecionados.includes(p.name.common)
-    );
-    setPaisesExibidos(filtrados);
-  }, [todosPaises]);
-
-  const removerPais = (nome: string) => {
-    setPaisesExibidos(prev => prev.filter(p => p.name.common !== nome));
+  // Função para remover um local pelo id
+  const removerLocal = (id: string) => {
+    setLocaisExibidos(prev => prev.filter(item => item.id !== id));
   };
 
   const salvar = async () => {
-    SetSalvarRoteiro(true);
-    return;
+    const idCreator = await getUserId();
+
+    // Pegando dados do roteiro
+    const country = locaisExibidos.find(item => item.tipo === "pais")?.nome;
+    const state = locaisExibidos.find(item => item.tipo === "pais")?.regiao;
+    const city = locaisExibidos.find(item => item.tipo === "pais")?.capital;
+
+    const idCommercialPoint = locaisExibidos.find(item => item.tipo === "comercial")?.id;
+    const idTouristingPoint = locaisExibidos.find(item => item.tipo === "turistico")?.id;
+
+    try {
+      const response = await fetch(`${BASE_IP}/update/roadMap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idRoadMap: id,
+          idCreator,
+          country,
+          state,
+          city,
+          idCommercialPoint,
+          idTouristingPoint
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Roteiro salvo com sucesso:", data.message);
+        setRoteiroSalvo(true);
+      } else {
+        console.log("Erro ao salvar roteiro:", data.message);
+      }
+    } catch (error) {
+      console.log("Erro na requisição de salvar:", error);
+    }
   };
 
   const publicar = async () => {
     const idCreator = await getUserId();
 
     try {
-      const response = await fetch("http://192.168.72.107:3333/published/roadMap", {
+      const response = await fetch(`${BASE_IP}/published/roadMap`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, idCreator })
@@ -85,6 +154,43 @@ export default function Roteiro() {
     } catch (error) {
       console.log("Erro na requisição de publicação:", error);
     }
+  };
+
+  // Renderização condicional para cada tipo
+  const renderItem = ({ item }: { item: ItemUnificado }) => {
+    if (item.tipo === "pais") {
+      return (
+        <View style={styles.Roteiro}>
+          <Image source={{ uri: item.imagem }} style={styles.imagem} />
+          <Text style={styles.textRoteiro1}>{item.nome}</Text>
+          <Text style={styles.textRoteiro2}>Região: {item.regiao}</Text>
+          <Text style={styles.textRoteiro2}>Capital: {item.capital}</Text>
+          <Text style={styles.textRoteiro2}>População: {item.populacao}</Text>
+          <Text style={styles.textRoteiro2}>Área: {item.area} km²</Text>
+          <TouchableOpacity
+            style={styles.remove}
+            onPress={() => removerLocal(item.id)}
+          >
+            <Image source={require('../../../../assets/images/remove.png')} />
+          </TouchableOpacity>
+        </View>
+      );
+    } else if (item.tipo === "turistico" || item.tipo === "comercial") {
+      return (
+        <View style={styles.Roteiro}>
+          <Image source={{ uri: item.imagem }} style={styles.imagem} />
+          <Text style={styles.textRoteiro1}>{item.nome}</Text>
+          <Text style={styles.textRoteiro2}>Região: {item.regiao}</Text>
+          <TouchableOpacity
+            style={styles.remove}
+            onPress={() => removerLocal(item.id)}
+          >
+            <Image source={require('../../../../assets/images/remove.png')} />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return null;
   };
 
   return (
@@ -107,29 +213,16 @@ export default function Roteiro() {
             </>
           )}
           <Text style={styles.text3}>Locais:</Text>
-
         </View>
 
         <View style={styles.subView2}>
           <FlatList
-            data={paisesExibidos}
-            keyExtractor={(item) => item.name.common}
-            renderItem={({ item }) => (
-              <View style={styles.Roteiro}>
-                <Image source={{ uri: item.flags.png }} style={styles.imagem} />
-                <Text style={styles.textRoteiro1}>{item.name.common}</Text>
-                <Text style={styles.textRoteiro2}>População: {item.population?.toLocaleString() || "N/A"}</Text>
-                <Text style={styles.textRoteiro2}>Área: {item.area?.toLocaleString() || "N/A"} km²</Text>
-                <TouchableOpacity
-                  style={styles.remove}
-                  onPress={() => removerPais(item.name.common)}
-                >
-                  <Image source={require('../../../../assets/images/remove.png')} />
-                </TouchableOpacity>
-              </View>
-            )}
+            data={locaisExibidos}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
             contentContainerStyle={{ gap: 10, paddingVertical: 10 }}
           />
+
           {roteiroSalvo ? (
             <TouchableOpacity style={styles.button}>
               <Text style={styles.textButton} onPress={publicar}>Publicar</Text>
@@ -210,17 +303,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 260
   },
-  InputPesquisa: {
-    flex: 1,
-    paddingLeft: 50,
-    fontSize: 20
-  },
-  PesquisaIcon: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    left: 15,
-    top: 13,
+  button: {
+    width: 103,
+    height: 31,
+    borderRadius: 10,
+    bottom: 20,
+    backgroundColor: '#39B51B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute'
   },
   Roteiro: {
     width: 315,
@@ -231,16 +322,7 @@ const styles = StyleSheet.create({
     borderColor: '#3DD019',
     justifyContent: 'center',
     flexDirection: 'column',
-    paddingLeft: 100
+    paddingLeft: 100,
+    marginBottom: 10,
   },
-  button: {
-    width: 103,
-    height: 31,
-    borderRadius: 10,
-    bottom: 20,
-    backgroundColor: '#39B51B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute'
-  }
 });

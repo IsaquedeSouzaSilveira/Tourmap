@@ -11,6 +11,7 @@ import {ButtonBack} from "@/components/button2/index";
 import { ButtonPradao } from "@/components/button1";
 import { getUserId } from "@/utils/storage";
 import { TextErro } from "@/components/TextErro";
+import { BASE_IP } from "@/config/api";
 
 
 export default function Roteiros(){
@@ -25,7 +26,7 @@ export default function Roteiros(){
         const idCriador = await getUserId(); 
 
         try {
-            const resultado = await fetch('http://192.168.72.107:3333/register/roadMap', {
+            const resultado = await fetch(`${BASE_IP}/register/roadMap`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

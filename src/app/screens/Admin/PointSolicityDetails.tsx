@@ -10,6 +10,8 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 
 import { ButtonBack } from "@/components/button2/index";
+import { BASE_IP } from "@/config/api";
+import { getUserId } from "@/utils/storage";
 
 export default function SolicitationDetails() {
   const [location, setLocation] = useState("");
@@ -19,39 +21,73 @@ export default function SolicitationDetails() {
   const title = params.title;
   const description = params.description;
   const time = params.time;
+  
 
-    const aceitar = () => {
-        setButtonsVisible(false);
-        setTimeout(() => {
-            if (params.origin === "PointTuristSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointTuristSolicitys",
-                params: { removeId: params.id },
-            });
-            } else if (params.origin === "PointComercialSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointComercialSolicitys",
-                params: { removeId: params.id },
-            });
-            }
-        }, 500); 
-    };
-    const negar = () => {
-        setButtonsVisible(false);
-        setTimeout(() => {
-            if (params.origin === "PointTuristSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointTuristSolicitys",
-                params: { removeId: params.id },
-            });
-            } else if (params.origin === "PointComercialSolicitys") {
-            router.replace({
-                pathname: "/screens/Admin/PointComercialSolicitys",
-                params: { removeId: params.id },
-            });
-            }
-        }, 500);  
-    };
+  const aceitar = async () => {
+    setButtonsVisible(false);
+
+    try {
+      const id = params.id as string;
+      const Userid = await getUserId();
+
+      if (params.origin === "PointTuristSolicitys") {
+        await fetch(`${BASE_IP}/publishOn/touristPoint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idTouristPoint: id, idUser: Userid }),
+        });
+        router.replace({
+          pathname: "/screens/Admin/PointTuristSolicitys",
+          params: { removeId: id },
+        });
+      } else if (params.origin === "PointComercialSolicitys") {
+        await fetch(`${BASE_IP}/publishOn/commercialPoint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idCommercialPoint: id, idUser: Userid}), // substitua "ADMIN_ID" se necessário
+        });
+        router.replace({
+          pathname: "/screens/Admin/PointComercialSolicitys",
+          params: { removeId: id },
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao aceitar solicitação:", error);
+    }
+  };
+
+  const negar = async () => {
+    setButtonsVisible(false);
+
+    try {
+      const id = params.id as string;
+
+      if (params.origin === "PointTuristSolicitys") {
+        await fetch(`${BASE_IP}/delete/touristPoint`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idTouristPoint: id }),
+        });
+        router.replace({
+          pathname: "/screens/Admin/PointTuristSolicitys",
+          params: { removeId: id },
+        });
+      } else if (params.origin === "PointComercialSolicitys") {
+        await fetch(`${BASE_IP}/delete/commercialPoint`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idPoint: id, idBusiness: Userid }), 
+        });
+        router.replace({
+          pathname: "/screens/Admin/PointComercialSolicitys",
+          params: { removeId: id },
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao negar solicitação:", error);
+    }
+  };
+
 
   return (
     <View style={styles.view1}>

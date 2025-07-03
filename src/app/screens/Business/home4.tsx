@@ -2,25 +2,30 @@ import { FlatList, View, TouchableOpacity, StyleSheet, Image, Text, TextInput, A
 import React, { useState, useEffect } from 'react';
 import { router } from "expo-router";
 import { usePaises } from '../../../hooks/usePaises';
-import { getUserId, getUserType  } from "@/utils/storage";
+import { LogOutUser  } from "@/utils/storage";
 import * as Location from 'expo-location';
 
-export default function Home4() {
+
+export default function Home1() {
     const { pais, carregando } = usePaises();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const slideAnim = useState(new Animated.Value(-Dimensions.get('window').width))[0];
     const [searchText, setSearchText] = useState('');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
-    const [showLocalOptions, setShowLocalOptions] = useState(false);
-    const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+    const [mostrarFiltrosAvaliacao, setMostrarFiltrosAvaliacao] = useState(false);
+    const [mostrarFiltrosIdioma, setMostrarFiltrosIdioma] = useState(false);
+    const [mostrarFiltrosCategoria, setMostrarFiltrosCategoria] = useState(false);
+    const [mostrarFiltrosLocais, setMostrarFiltrosLocais] = useState(false);
+    const [filtrosSelecionados, setfiltrosSelecionados] = useState<string[]>([]);
 
-    
     const [localizacaoTexto, setLocalizacaoTexto] = useState('Carregando...');
 
-    const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-    const [states, setStates] = useState<string[]>([]);
-    const [selectedState, setSelectedState] = useState<string | null>(null);
-    const [cities, setCities] = useState<string[]>([]);
+
+    const idiomasUnicos = Array.from(
+        new Set(
+            pais.flatMap(item => item.languages ? Object.values(item.languages) : [])
+        )
+    );
 
     useEffect(() => {
         (async () => {
@@ -46,31 +51,11 @@ export default function Home4() {
         })();
     }, []);
 
-    useEffect(() => {
-        if (selectedCountry) {
-            fetch("https://countriesnow.space/api/v0.1/countries/states", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ country: selectedCountry })
-            })
-            .then(res => res.json())
-            .then(json => setStates(json.data.states.map((s: any) => s.name)))
-            .catch(console.error);
-        }
-    }, [selectedCountry]);
-
-    useEffect(() => {
-        if (selectedCountry && selectedState) {
-            fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ country: selectedCountry, state: selectedState })
-            })
-            .then(res => res.json())
-            .then(json => setCities(json.data))
-            .catch(console.error);
-        }
-    }, [selectedState]);
+    const LogOut = async () =>{
+        console.log('Apagando Id do usuário')
+        await LogOutUser();
+        router.replace('/');
+    };
 
     const toggleMenu = () => {
         if (!isMenuOpen) {
@@ -89,51 +74,39 @@ export default function Home4() {
         }
     };
 
-    const handleSelectFilter = (type: string, value: string) => {
-        const filtro = `${type}: ${value}`;
-        if (!selectedFilters.includes(filtro)) {
-            setSelectedFilters([...selectedFilters, filtro]);
-        }
+    const AdicionarFiltro = (filtro: string) => {
+        setfiltrosSelecionados((prev) =>{
+            if(prev.includes(filtro)){
+                return prev.filter(item => item !== filtro);
+            }
+            else{
+                return [...prev, filtro];
+            }
+        })
     };
 
-    const renderData = () => {
-        const items: any[] = [];
+    
+    const filteredPaises = pais.filter((item) => {
+        const nomePais = item.name.common.toLowerCase();
+        const linguas = item.languages ? Object.values(item.languages).map(l => l.toLowerCase()) : [];
 
-        if (selectedFilters.some(f => f.startsWith('País'))) {
-            items.push(...pais.map(p => ({
-                tipo: 'País',
-                nome: p.name.common,
-                detalhes: p
-            })));
-        }
+        
+        const nomeBateComBusca = nomePais.includes(searchText.toLowerCase());
 
-        if (selectedFilters.some(f => f.startsWith('Estado'))) {
-            items.push(...states.map(s => ({
-                tipo: 'Estado',
-                nome: s
-            })));
-        }
+        
+        if (filtrosSelecionados.length === 0) return nomeBateComBusca;
 
-        if (selectedFilters.some(f => f.startsWith('Cidade'))) {
-            items.push(...cities.map(c => ({
-                tipo: 'Cidade',
-                nome: c
-            })));
-        }
-
-        if (selectedFilters.length === 0) {
-            items.push(...pais.map(p => ({
-                tipo: 'País',
-                nome: p.name.common,
-                detalhes: p
-            })));
-        }
-
-        return items.filter(item => item.nome.toLowerCase().includes(searchText.toLowerCase()));
-    };
+        return nomeBateComBusca && filtrosSelecionados.some(filtro => {
+            const filtroLower = filtro.toLowerCase();
+            return (
+                nomePais.includes(filtroLower) ||
+                linguas.includes(filtroLower)         
+            );
+        });
+    });
 
     return (
-        <ScrollView style={styles.view1}>
+        <View style={styles.view1}>
             <View style={styles.view2}>
                 <TouchableOpacity onPress={toggleMenu}>
                     <Image source={require('../../../../assets/images/MenuIcon.png')} style={styles.MenuIcon}/>
@@ -142,110 +115,213 @@ export default function Home4() {
                 <Text style={styles.Text1}>{localizacaoTexto}</Text>
 
                 <View style={styles.SubView}>
+                    
                     <Image source={require('../../../../assets/images/PesquisaIcon.png')} style={styles.PesquisaIcon}/>
+
                     <TextInput 
                         placeholder="Aonde Vamos?" 
                         style={styles.InputPesquisa}
                         value={searchText}
                         onChangeText={setSearchText}
                     />
-                    <TouchableOpacity style={styles.FilterIcon} activeOpacity={0.8} onPress={() => setMostrarFiltros(view => !view)}>
+                    
+                    <TouchableOpacity style={styles.FilterIcon} activeOpacity={0.8} onPress={() =>setMostrarFiltros(view => !view)}>
                         <Image source={require('../../../../assets/images/FilterIcon.png')} />
                     </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.NotifyIcon} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.NotifyIcon} activeOpacity={0.8} onPress={()=> router.navigate('/screens/notification')}>
                     <Image source={require('../../../../assets/images/NotifyIcon.png')}/>
                 </TouchableOpacity>
+                {filtrosSelecionados.length > 0 && (
+                    <ScrollView horizontal={true} style={styles.FiltrosAplicadosView} showsHorizontalScrollIndicator={false}>
+                        {filtrosSelecionados.map((filtro, index) => (
+                            <TouchableOpacity style={styles.FiltroButtonAplicado} onPress={()=>AdicionarFiltro(filtro)} activeOpacity={0.8} key={index}>
+                                <Text style={styles.textFiltroAplicado}>{filtro}</Text>
+                                <Image source={require('../../../../assets/images/delete.png')} style={styles.filterImage}/>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
             </View>
 
-            {selectedFilters.length > 0 && (
-                <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-                    {selectedFilters.map((filtro, idx) => (
-                        <View key={idx} style={{ backgroundColor: '#fff', padding: 8, borderRadius: 6, marginVertical: 2 }}>
-                            <Text>{filtro}</Text>
-                        </View>
-                    ))}
-                </View>
-            )}
-
             <View style={styles.view3}>
-                {mostrarFiltros && (
-                    <View style={{ width: '100%', padding: 10 }}>
-                        <TouchableOpacity style={styles.FiltroButton} onPress={() => setShowLocalOptions(!showLocalOptions)}>
-                            <Text>Locais ▼</Text>
-                        </TouchableOpacity>
-                        {showLocalOptions && (
-                            <View style={{ backgroundColor: '#fff', marginTop: 8, borderRadius: 8, padding: 10 }}>
-                                <Text style={{ fontWeight: 'bold' }}>Países:</Text>
-                                {pais.map((item) => (
-                                    <TouchableOpacity key={item.name.common} onPress={() => {
-                                        setSelectedCountry(item.name.common);
-                                        handleSelectFilter('País', item.name.common);
-                                    }}>
-                                        <Text style={{ padding: 4 }}>{item.name.common}</Text>
+                {mostrarFiltros ? (
+                    <View style={styles.view3}>
+                        
+                        <View style={styles.FiltrosView}>
+                            {mostrarFiltrosAvaliacao ? (
+                                <View>
+                                    <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosAvaliacao(!mostrarFiltrosAvaliacao)}>
+                                    <Text>⭐ ⭐ ⭐ ⭐ ⭐ ▼</Text>
                                     </TouchableOpacity>
-                                ))}
-                                {states.length > 0 && (
-                                    <>
-                                        <Text style={{ fontWeight: 'bold', marginTop: 10 }}>Estados:</Text>
-                                        {states.map(state => (
-                                            <TouchableOpacity key={state} onPress={() => {
-                                                setSelectedState(state);
-                                                handleSelectFilter('Estado', state);
-                                            }}>
-                                                <Text style={{ padding: 4 }}>{state}</Text>
+                                    <ScrollView style={styles.OptionsFiltroView}>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('⭐ ⭐ ⭐ ⭐ ⭐')}>
+                                            <Text>⭐ ⭐ ⭐ ⭐ ⭐</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('⭐ ⭐ ⭐ ⭐')}>
+                                            <Text>⭐ ⭐ ⭐ ⭐</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('⭐ ⭐ ⭐')}>
+                                            <Text>⭐ ⭐ ⭐</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('⭐ ⭐')}>
+                                            <Text>⭐ ⭐</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('⭐')}>
+                                            <Text>⭐</Text>
+                                        </TouchableOpacity>
+                                    </ScrollView>
+                                </View>
+                                    
+                            ):(
+                                <TouchableOpacity style={styles.FiltroButton} onPress={()=>setMostrarFiltrosAvaliacao(!mostrarFiltrosAvaliacao)}>
+                                <Text>⭐ ⭐ ⭐ ⭐ ⭐ ▼</Text>
+                                </TouchableOpacity>
+                            )}
+                            
+                            {mostrarFiltrosCategoria ? (
+                                <View>
+                                    <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosCategoria(!mostrarFiltrosCategoria)}>
+                                        <Text>Categorias ▼</Text>
+                                    </TouchableOpacity>
+                                    <ScrollView style={styles.OptionsFiltroView}>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('País')}>
+                                            <Text>País</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Cidade')}>
+                                            <Text>Cidade</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Estado')}>
+                                            <Text>Estado</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Ponto Turístico')}>
+                                            <Text>Ponto Turístico</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Ponto Comercial')}>
+                                            <Text>Ponto Comercial</Text>
+                                        </TouchableOpacity>
+                                    </ScrollView>
+                                </View>
+                                    
+                            ):(
+                                <TouchableOpacity style={styles.FiltroButton} onPress={()=>setMostrarFiltrosCategoria(!mostrarFiltrosCategoria)}>
+                                    <Text>Categorias ▼</Text>
+                                </TouchableOpacity>
+                            )}
+                            
+                            
+                        </View>
+                        
+                        <View style={styles.FiltrosView}>
+                            {mostrarFiltrosLocais ? (
+                                <View style={{width:120}}>
+                                    <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosLocais(!mostrarFiltrosLocais)}>
+                                        <Text>Locais ▼</Text>
+                                    </TouchableOpacity>
+                                    <FlatList
+                                        data={pais}
+                                        keyExtractor={(item) => item.name.common}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity
+                                                onPress={() => AdicionarFiltro(item.name.common)}
+                                                style={styles.FiltroButton2}
+                                            >
+                                            <Text>{item.name.common}</Text>
                                             </TouchableOpacity>
-                                        ))}
-                                    </>
-                                )}
-                                {cities.length > 0 && (
-                                    <>
-                                        <Text style={{ fontWeight: 'bold', marginTop: 10 }}>Cidades:</Text>
-                                        {cities.map(city => (
-                                            <TouchableOpacity key={city} onPress={() => handleSelectFilter('Cidade', city)}>
-                                                <Text style={{ padding: 4 }}>{city}</Text>
-                                            </TouchableOpacity>
-                                        ))}
-                                    </>
-                                )}
-                            </View>
-                        )}
+                                        )}
+                                        style={styles.OptionsFiltroView}
+                                    />
+                                </View>
+                                    
+                            ):(
+                                <TouchableOpacity style={styles.FiltroButton} onPress={()=>setMostrarFiltrosLocais(!mostrarFiltrosLocais)}>
+                                    <Text>Locais ▼</Text>
+                                </TouchableOpacity>
+                            )}
+                            
+                            {mostrarFiltrosIdioma ? (
+                                <View style={{width:120}}>
+                                    <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosIdioma(!mostrarFiltrosIdioma)}>
+                                        <Text>Idiomas ▼</Text>
+                                    </TouchableOpacity>
+                                    <FlatList
+                                        data={idiomasUnicos}
+                                        keyExtractor={(item, index) => item + index}
+                                        renderItem={({ item }) => (
+                                                <TouchableOpacity
+                                                onPress={() => AdicionarFiltro(item)}
+                                                style={styles.FiltroButton2}
+                                                >
+                                                    <Text>{item}</Text>
+                                                </TouchableOpacity>
+                                            )
+                                        }
+                                        style={styles.OptionsFiltroView}
+                                    />
+                                </View>
+                                    
+                            ):(
+                                <TouchableOpacity style={styles.FiltroButton} onPress={()=>setMostrarFiltrosIdioma(!mostrarFiltrosIdioma)}>
+                                    <Text>Idiomas ▼</Text>
+                                </TouchableOpacity>
+                            )}
+                            
+                        </View>
+                    </View>
+                ) : (
+                    <View style={styles.view3}>
+                        <Text style={styles.text2}>Destaques</Text>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home2')}>
+                        <Image source={require('../../../../assets/images/Avaliacao.png')} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home3')}>
+                        <Image source={require('../../../../assets/images/Heart.png')} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home1')}>
+                        <Image source={require('../../../../assets/images/Home.png')} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home5')}>
+                        <Image source={require('../../../../assets/images/Comercio.png')} />
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
 
-            {carregando && <ActivityIndicator size="large" color="#39B51B" style={{ marginTop: 20 }} />}
-
-            <FlatList
-                data={renderData()}
-                keyExtractor={(item, index) => `${item.tipo}-${item.nome}-${index}`}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        onPress={() => router.push({
-                            pathname: '/screens/LocalDetalhes',
-                            params: {
-                                nome: item.nome,
-                                tipo: item.tipo,
-                                ...(item.tipo === 'País' ? {
-                                    bandeira: item.detalhes.flags.png,
-                                    regiao: item.detalhes.region,
-                                    capital: item.detalhes.capital ? item.detalhes.capital[0] : 'Não informado',
-                                    continente: item.detalhes.continents ? item.detalhes.continents[0] : 'Não informado',
-                                    populacao: item.detalhes.population ? item.detalhes.population.toString() : 'Não informado',
-                                    area: item.detalhes.area ? item.detalhes.area.toString() : 'Não informado',
-                                    linguas: item.detalhes.languages ? JSON.stringify(item.detalhes.languages) : 'Não informado',
-                                    moeda: item.detalhes.currencies ? JSON.stringify(item.detalhes.currencies) : 'Não informado'
-                                } : {})
-                            }
-                        })}
-                        style={styles.countryItem}
-                    >
-                        <Text style={styles.countryName}>{item.nome}</Text>
-                        <Text style={styles.countrySub}>{item.tipo}</Text>
-                    </TouchableOpacity>
-                )}
-                contentContainerStyle={{ padding: 10 }}
-            />
+            
+            {carregando ? (
+                <ActivityIndicator size="large" color="#39B51B" style={{ marginTop: 20 }} />
+            ) : (
+                <FlatList
+                    data={filteredPaises}
+                    keyExtractor={(item) => item.name.common}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            onPress={() => router.push({
+                                pathname: '/screens/LocalDetalhes',
+                                params: {
+                                    nome: item.name.common,
+                                    bandeira: item.flags.png,
+                                    regiao: item.region,
+                                    capital: item.capital ? item.capital[0] : 'Não informado',
+                                    continente: item.continents ? item.continents[0] : 'Não informado',
+                                    populacao: item.population ? item.population.toString() : 'Não informado',
+                                    area: item.area ? item.area.toString() : 'Não informado',
+                                    linguas: item.languages ? JSON.stringify(item.languages) : 'Não informado',
+                                    moeda: item.currencies ? JSON.stringify(item.currencies) : 'Não informado'
+                                },
+                            })}
+                            style={styles.countryItem}
+                        >
+                            <Image source={{ uri: item.flags.png }} style={styles.flag} />
+                            <View style={styles.countryTextContainer}>
+                                <Text style={styles.countryName}>{item.name.common}</Text>
+                                <Text style={styles.countrySub}>{item.region}</Text>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    contentContainerStyle={{ padding: 10 }}
+                />
+            )}
             {isMenuOpen && (
                 <TouchableOpacity style={styles.menuOverlay} onPress={toggleMenu}>
                     <Animated.View style={[styles.sideMenu, { left: slideAnim }]}>
@@ -255,19 +331,25 @@ export default function Home4() {
                                 <Image source={require('../../../../assets/images/MenuIconReverse.png')} style={styles.menuCloseIcon} />
                             </TouchableOpacity>
                         </View>
-                        <TouchableOpacity onPress={()=> router.navigate('/screens/Business/perfil')} >
-                            <Text style={styles.menuText}>PERFIL</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={()=> router.navigate('/screens/adicionarPontoTuristico')}>
-                            <Text style={styles.menuText}>ADICIONAR PONTO TURÍSTICO</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={()=> router.navigate('/screens/adicionarPontoComercial')}>
-                            <Text style={styles.menuText}>ADICIONAR PONTO COMERCIAL</Text>
-                        </TouchableOpacity>
+                        <View style={styles.ServicosView}>
+                            <TouchableOpacity onPress={()=> router.navigate('/screens/Business/perfil')} >
+                                <Text style={styles.menuText}>PERFIL</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={()=> router.navigate('/screens/adicionarPontoTuristico')}>
+                                <Text style={styles.menuText}>ADICIONAR PONTO TURÍSTICO</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={()=> router.navigate('/screens/adicionarPontoComercial')}>
+                                <Text style={styles.menuText}>ADICIONAR PONTO COMERCIAL</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={LogOut}>
+                                <Text style={styles.menuText}>SAIR DA CONTA</Text>
+                            </TouchableOpacity>
+                        </View>
+                        
                     </Animated.View>
                 </TouchableOpacity>
             )}
-        </ScrollView>
+        </View>
     );
 }
 
@@ -301,12 +383,32 @@ const styles = StyleSheet.create({
         top: 80,
         left: 20
     },
+    ServicosView:{
+        width: '100%',
+        paddingBottom: 10,
+        height:200,
+        justifyContent: 'center'
+    },
     FiltrosView:{
         width: '50%',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 20,
+        gap: 15,
     },
+    OptionsFiltroView:{
+        backgroundColor: 'white',
+        gap: 3,
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
+        maxHeight:35
+    },
+    FiltrosAplicadosView:{
+        position: 'absolute',
+        bottom: -5,
+        left: 40,
+        width: 320,
+        height: 40,
+    },  
     FiltroButton:{
         width: 120,
         height:35,
@@ -315,12 +417,38 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
+    FiltroButtonAplicado:{
+        width: 90,
+        height:25,
+        backgroundColor: 'white',
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        marginHorizontal: 6
+    },
+    FiltroButtonActivity:{
+        width: 120,
+        height:35,
+        backgroundColor: 'white',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8
+    },
+    FiltroButton2:{
+        width: '100%',
+        height:35,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
     MenuIcon:{
         width: 33,
         height: 26,
         position:'absolute',
         top: 20,
-        left: 10
+        left: 10,
+        
     },
     LocateIcon:{
         width: 20,
@@ -376,6 +504,11 @@ const styles = StyleSheet.create({
         top:1,
         fontWeight: 'bold',
         fontSize: 15
+    },
+    textFiltroAplicado:{
+        fontSize: 10,
+        fontWeight: 'bold',
+        right: 5
     },
     InputPesquisa:{
         flex:1,
@@ -502,7 +635,13 @@ const styles = StyleSheet.create({
     menuText:{
         fontSize: 17,
         color: '#FFFFFF',
+        fontWeight: 'bold',
         paddingBottom: 10
     },
-    
+    filterImage:{
+        position: 'absolute',
+        right: 5,
+        width: 7,
+        height: 7
+    }
 });

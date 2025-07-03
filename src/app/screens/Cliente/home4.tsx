@@ -271,17 +271,17 @@ export default function Home1() {
                 ) : (
                     <View style={styles.view3}>
                         <Text style={styles.text2}>Destaques</Text>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home2')}>
-                        <Image source={require('../../../../assets/images/Avaliacao.png')} />
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Cliente/home2')}>
+                            <Image source={require('../../../../assets/images/Avaliacao.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home3')}>
-                        <Image source={require('../../../../assets/images/Heart.png')} />
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Cliente/home3')}>
+                            <Image source={require('../../../../assets/images/Heart.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home4')}>
-                        <Image source={require('../../../../assets/images/Home.png')} />
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Cliente/home1')}>
+                            <Image source={require('../../../../assets/images/Home.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home5')}>
-                        <Image source={require('../../../../assets/images/Comercio.png')} />
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Cliente/home5')}>
+                            <Image source={require('../../../../assets/images/Comercio.png')} />
                         </TouchableOpacity>
                     </View>
                 )}
@@ -332,7 +332,7 @@ export default function Home1() {
                             </TouchableOpacity>
                         </View>
                         <View style={styles.ServicosView}>
-                            <TouchableOpacity onPress={()=> router.navigate('/screens/Business/perfil')} >
+                            <TouchableOpacity onPress={()=> router.navigate('/screens/Cliente/perfil')} >
                                 <Text style={styles.menuText}>PERFIL</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={()=> router.navigate('/screens/Cliente/criarRoteiro1')}>

@@ -113,16 +113,16 @@ export default function Home1() {
                 ) : (
                     <View style={styles.view3}>
                         <Text style={styles.text2}>Destaques</Text>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home1')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home1')}>
                         <Image source={require('../../../../assets/images/Home.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home3')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home3')}>
                         <Image source={require('../../../../assets/images/Heart.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home4')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home4')}>
                         <Image source={require('../../../../assets/images/locale.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home5')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home5')}>
                         <Image source={require('../../../../assets/images/Comercio.png')} />
                         </TouchableOpacity>
                     </View>

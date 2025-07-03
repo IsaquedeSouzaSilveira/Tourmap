@@ -8,6 +8,7 @@ import { getUserId, getUserType  } from "@/utils/storage";
 
 
 
+
 export default function Index(){
 
     const [loading, setLoading] = useState(true);

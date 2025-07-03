@@ -63,21 +63,7 @@ export default function LocalDetalhes() {
             </Text>
 
         </View>
-        <View style={styles.Subview}>
-            <TouchableOpacity 
-              style={styles.DenunciaButton} 
-              activeOpacity={0.8}
-              onPress={()=>router.push({
-                pathname: '/screens/Cliente/denuncia',
-                params:{
-                  name: nome
-                }
-              })
-              }
-            >
-              <Image source={require('../../../assets/images/DenunciaIcon.png')} style={styles.DenunciaImage}/>
-            </TouchableOpacity>
-        </View>
+
       </ScrollView>
     </View>
   );
@@ -100,12 +86,6 @@ const styles = StyleSheet.create({
     gap: 10,
     left:20,
     marginTop:8
-  },
-  Subview:{
-    borderTopWidth:2,
-    borderColor: '#D8D8D8',
-    width:'100%',
-    height:100
   },
   ComentsView:{
     width: '100%',

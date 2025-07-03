@@ -2,39 +2,30 @@ import { FlatList, View, TouchableOpacity, StyleSheet, Image, Text, TextInput, A
 import React, { useState, useEffect } from 'react';
 import { router } from "expo-router";
 import { usePaises } from '../../../hooks/usePaises';
+import { usePontosTuristicos } from "@/hooks/useTouristPoints";
 import { LogOutUser  } from "@/utils/storage";
 import * as Location from 'expo-location';
 
 
 export default function Home1() {
-    const { pais, carregando } = usePaises();
+    const { pontosTuristicos, carregando } = usePontosTuristicos();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const slideAnim = useState(new Animated.Value(-Dimensions.get('window').width))[0];
     const [searchText, setSearchText] = useState('');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [mostrarFiltrosAvaliacao, setMostrarFiltrosAvaliacao] = useState(false);
     const [mostrarFiltrosIdioma, setMostrarFiltrosIdioma] = useState(false);
-    const [mostrarFiltrosCategoria, setMostrarFiltrosCategoria] = useState(false);
     const [mostrarFiltrosLocais, setMostrarFiltrosLocais] = useState(false);
     const [filtrosSelecionados, setfiltrosSelecionados] = useState<string[]>([]);
 
-    const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
     const [localizacaoTexto, setLocalizacaoTexto] = useState('Carregando...');
-
-
-    const idiomasUnicos = Array.from(
-        new Set(
-            pais.flatMap(item => item.languages ? Object.values(item.languages) : [])
-        )
-    );
 
     useEffect(() => {
         (async () => {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === 'granted') {
                 const loc = await Location.getCurrentPositionAsync({});
-                setLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
-
+                
                 const reverseGeocode = await Location.reverseGeocodeAsync({
                     latitude: loc.coords.latitude,
                     longitude: loc.coords.longitude,
@@ -88,23 +79,9 @@ export default function Home1() {
     };
 
     
-    const filteredPaises = pais.filter((item) => {
-        const nomePais = item.name.common.toLowerCase();
-        const linguas = item.languages ? Object.values(item.languages).map(l => l.toLowerCase()) : [];
-
-        
-        const nomeBateComBusca = nomePais.includes(searchText.toLowerCase());
-
-        
-        if (filtrosSelecionados.length === 0) return nomeBateComBusca;
-
-        return nomeBateComBusca && filtrosSelecionados.some(filtro => {
-            const filtroLower = filtro.toLowerCase();
-            return (
-                nomePais.includes(filtroLower) ||
-                linguas.includes(filtroLower)         
-            );
-        });
+    const pontosFiltrados = pontosTuristicos.filter((item) => {
+        const nome = item.name?.toLowerCase() || '';
+        return nome.includes(searchText.toLowerCase());
     });
 
     return (
@@ -181,37 +158,6 @@ export default function Home1() {
                                 </TouchableOpacity>
                             )}
                             
-                            {mostrarFiltrosCategoria ? (
-                                <View>
-                                    <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosCategoria(!mostrarFiltrosCategoria)}>
-                                        <Text>Categorias ▼</Text>
-                                    </TouchableOpacity>
-                                    <ScrollView style={styles.OptionsFiltroView}>
-                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('País')}>
-                                            <Text>País</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Cidade')}>
-                                            <Text>Cidade</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Estado')}>
-                                            <Text>Estado</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Ponto Turístico')}>
-                                            <Text>Ponto Turístico</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.FiltroButton2} onPress={()=>AdicionarFiltro('Ponto Comercial')}>
-                                            <Text>Ponto Comercial</Text>
-                                        </TouchableOpacity>
-                                    </ScrollView>
-                                </View>
-                                    
-                            ):(
-                                <TouchableOpacity style={styles.FiltroButton} onPress={()=>setMostrarFiltrosCategoria(!mostrarFiltrosCategoria)}>
-                                    <Text>Categorias ▼</Text>
-                                </TouchableOpacity>
-                            )}
-                            
-                            
                         </View>
                         
                         <View style={styles.FiltrosView}>
@@ -220,19 +166,7 @@ export default function Home1() {
                                     <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosLocais(!mostrarFiltrosLocais)}>
                                         <Text>Locais ▼</Text>
                                     </TouchableOpacity>
-                                    <FlatList
-                                        data={pais}
-                                        keyExtractor={(item) => item.name.common}
-                                        renderItem={({ item }) => (
-                                            <TouchableOpacity
-                                                onPress={() => AdicionarFiltro(item.name.common)}
-                                                style={styles.FiltroButton2}
-                                            >
-                                            <Text>{item.name.common}</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                        style={styles.OptionsFiltroView}
-                                    />
+                                
                                 </View>
                                     
                             ):(
@@ -246,20 +180,7 @@ export default function Home1() {
                                     <TouchableOpacity style={styles.FiltroButtonActivity} onPress={()=>setMostrarFiltrosIdioma(!mostrarFiltrosIdioma)}>
                                         <Text>Idiomas ▼</Text>
                                     </TouchableOpacity>
-                                    <FlatList
-                                        data={idiomasUnicos}
-                                        keyExtractor={(item, index) => item + index}
-                                        renderItem={({ item }) => (
-                                                <TouchableOpacity
-                                                onPress={() => AdicionarFiltro(item)}
-                                                style={styles.FiltroButton2}
-                                                >
-                                                    <Text>{item}</Text>
-                                                </TouchableOpacity>
-                                            )
-                                        }
-                                        style={styles.OptionsFiltroView}
-                                    />
+                                    
                                 </View>
                                     
                             ):(
@@ -273,16 +194,16 @@ export default function Home1() {
                 ) : (
                     <View style={styles.view3}>
                         <Text style={styles.text2}>Destaques</Text>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home2')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home2')}>
                         <Image source={require('../../../../assets/images/Avaliacao.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home3')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home1')}>
                         <Image source={require('../../../../assets/images/Home.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home4')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home4')}>
                         <Image source={require('../../../../assets/images/locale.png')} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Business/home5')}>
+                        <TouchableOpacity style={styles.DestaquesButtons} onPress={() => router.navigate('/screens/Admin/home5')}>
                         <Image source={require('../../../../assets/images/Comercio.png')} />
                         </TouchableOpacity>
                     </View>
@@ -294,35 +215,32 @@ export default function Home1() {
                 <ActivityIndicator size="large" color="#39B51B" style={{ marginTop: 20 }} />
             ) : (
                 <FlatList
-                    data={filteredPaises}
-                    keyExtractor={(item) => item.name.common}
+                    data={pontosFiltrados}
+                    keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             onPress={() => router.push({
                                 pathname: '/screens/LocalDetalhes',
                                 params: {
-                                    nome: item.name.common,
-                                    bandeira: item.flags.png,
-                                    regiao: item.region,
-                                    capital: item.capital ? item.capital[0] : 'Não informado',
-                                    continente: item.continents ? item.continents[0] : 'Não informado',
-                                    populacao: item.population ? item.population.toString() : 'Não informado',
-                                    area: item.area ? item.area.toString() : 'Não informado',
-                                    linguas: item.languages ? JSON.stringify(item.languages) : 'Não informado',
-                                    moeda: item.currencies ? JSON.stringify(item.currencies) : 'Não informado'
+                                    id: item.id,
+                                    nome: item.name,
+                                    descricao: item.description,
+                                    imagem: item.userImageUrl || '',
+                                    local: item.local
                                 },
                             })}
                             style={styles.countryItem}
                         >
-                            <Image source={{ uri: item.flags.png }} style={styles.flag} />
+                            <Image source={{ uri: item.userImageUrl }} style={styles.flag} />
                             <View style={styles.countryTextContainer}>
-                                <Text style={styles.countryName}>{item.name.common}</Text>
-                                <Text style={styles.countrySub}>{item.region}</Text>
+                                <Text style={styles.countryName}>{item.name}</Text>
+                                <Text style={styles.countrySub}>{item.local}</Text>
                             </View>
                         </TouchableOpacity>
                     )}
                     contentContainerStyle={{ padding: 10 }}
                 />
+
             )}
             {isMenuOpen && (
                 <TouchableOpacity style={styles.menuOverlay} onPress={toggleMenu}>
@@ -334,7 +252,7 @@ export default function Home1() {
                             </TouchableOpacity>
                         </View>
                         <View style={styles.ServicosView}>
-                            <TouchableOpacity onPress={()=> router.navigate('/screens/Business/perfil')} >
+                            <TouchableOpacity onPress={()=> router.navigate('/screens/Admin/perfil')} >
                                 <Text style={styles.menuText}>PERFIL</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={()=> router.navigate('/screens/Admin/PointTuristSolicitys')}>
