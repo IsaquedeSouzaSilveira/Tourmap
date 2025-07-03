@@ -1,4 +1,43 @@
-# Welcome to your Expo app 👋
+# Welcome to Tour_Map
+
+TourMap é um aplicativo móvel que consome uma API local para gerenciamento de pontos turísticos e comerciais.
+
+---
+
+## Requisitos
+
+- Ter o **XAMPP** instalado no computador.
+- O **Apache** e o **MySQL** devem estar rodando no XAMPP.
+- O MySQL deve estar configurado para rodar na porta **3306** (padrão).
+- Ter a API local do TourMap rodando (backend).
+
+---
+
+## Configuração importante
+
+No código do aplicativo, você deve alterar o endereço base da API para o IP local da sua máquina, para que o app consiga se conectar corretamente à API.
+
+No arquivo onde a base da API está configurada, localize:
+
+export const BASE_IP = "http://192.168.0.103:3333";
+
+###Como iniciar a API local
+
+Após configurar o IP, abra um terminal e navegue até o diretório da API local (APILocal):
+
+   cd src/APIs/APILocal
+
+Em seguida, execute o comando para iniciar a API em modo de desenvolvimento:
+
+   npm run dev
+
+Isso vai rodar a API localmente na porta configurada (geralmente a 3333).
+
+Link para instalar o apk: 
+
+Observações
+
+    Certifique-se de que o dispositivo (celular ou emulador) e o servidor da API estejam na mesma rede para que a comunicação funcione.
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
