@@ -33,7 +33,7 @@ Em seguida, execute o comando para iniciar a API em modo de desenvolvimento:
 
 Isso vai rodar a API localmente na porta configurada (geralmente a 3333).
 
-Link para instalar o apk: 
+Link para instalar o apk: https://expo.dev/artifacts/eas/eCUhEyUWUx2dHytnFYQCK.tar.gz
 
 Observações
 
